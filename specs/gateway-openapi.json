@@ -1,0 +1,220 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Gateway Entrypoint",
+    "version": "1.0.0",
+    "description": "Unified Spring Cloud Gateway Entrypoint (Port 8080) for E-Commerce Microservices"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Spring Cloud API Gateway Entrypoint"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer Token passed through Gateway to backend downstream microservices"
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "$ref": "./auth-openapi.json#/components/schemas/RegisterRequest"
+      },
+      "LoginRequest": {
+        "$ref": "./auth-openapi.json#/components/schemas/LoginRequest"
+      },
+      "AuthResponse": {
+        "$ref": "./auth-openapi.json#/components/schemas/AuthResponse"
+      },
+      "ProductRequest": {
+        "$ref": "./product-openapi.json#/components/schemas/ProductRequest"
+      },
+      "CreateOrderRequest": {
+        "$ref": "./order-openapi.json#/components/schemas/CreateOrderRequest"
+      }
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Gateway - Auth Route"],
+        "summary": "Register customer via Gateway",
+        "description": "Routed via Spring Cloud Gateway (`Path=/api/auth/**`, `StripPrefix=1`) to Auth Service `POST /auth/register`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Gateway - Auth Route"],
+        "summary": "Login via Gateway",
+        "description": "Routed via Spring Cloud Gateway (`Path=/api/auth/**`, `StripPrefix=1`) to Auth Service `POST /auth/login`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication response with JWT token"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/product/products": {
+      "get": {
+        "tags": ["Gateway - Product Route"],
+        "summary": "Catalog query through Gateway route",
+        "description": "Configured Gateway route predicate `Path=/api/product/**` with `StripPrefix=1`. Note: Route prefix mismatch with backend controller mapping.",
+        "responses": {
+          "200": {
+            "description": "Products list"
+          },
+          "404": {
+            "description": "Route/path mismatch"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Gateway - Product Route"],
+        "summary": "Create product through Gateway route",
+        "description": "Configured Gateway route predicate `Path=/api/product/**` with `StripPrefix=1`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "description", "category", "price"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "category": { "type": "string" },
+                  "price": { "type": "number" },
+                  "imageUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/order/orders": {
+      "get": {
+        "tags": ["Gateway - Order Route"],
+        "summary": "Orders query through Gateway route",
+        "description": "Configured Gateway route predicate `Path=/api/order/**` with `StripPrefix=1`. Note: Route prefix mismatch with backend controller mapping.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orders list"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Route/path mismatch"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Gateway - Order Route"],
+        "summary": "Create order through Gateway route",
+        "description": "Configured Gateway route predicate `Path=/api/order/**` with `StripPrefix=1`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["items"],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["productId", "quantity"],
+                      "properties": {
+                        "productId": { "type": "string" },
+                        "quantity": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order created"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  }
+}

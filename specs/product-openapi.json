@@ -1,0 +1,321 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Product Service API",
+    "version": "1.0.0",
+    "description": "Product Catalog Microservice for E-Commerce Platform"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8082",
+      "description": "Product Service Direct Port"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer Token with ROLE_ADMIN for privileged actions"
+      }
+    },
+    "schemas": {
+      "ProductRequest": {
+        "type": "object",
+        "required": ["name", "description", "category", "price"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "example": "Wireless Noise Cancelling Headphones"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200,
+            "example": "Premium over-ear headphones with 30-hour battery life"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "Electronics"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0.01,
+            "example": 199.99
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://images.unsplash.com/photo-headphones"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "660c1f102f1d2b3a4c5e6f7b"
+          },
+          "name": {
+            "type": "string",
+            "example": "Wireless Noise Cancelling Headphones"
+          },
+          "description": {
+            "type": "string",
+            "example": "Premium over-ear headphones with 30-hour battery life"
+          },
+          "category": {
+            "type": "string",
+            "example": "Electronics"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "example": 199.99
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": "https://images.unsplash.com/photo-headphones"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/products": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "List all active products",
+        "description": "Publicly accessible endpoint listing all active catalog products.",
+        "responses": {
+          "200": {
+            "description": "Active products list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Products"],
+        "summary": "Create a new catalog product",
+        "description": "Privileged endpoint to add a new product. Intended for ADMIN role.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failure"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Access denied (non-admin)"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Get product details by ID",
+        "description": "Publicly accessible endpoint retrieving active product details.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Product identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found or inactive"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Products"],
+        "summary": "Update an existing product",
+        "description": "Privileged endpoint updating product details. Intended for ADMIN role.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Product identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failure"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Products"],
+        "summary": "Delete (soft-delete) a product",
+        "description": "Endpoint to deactivate a product. Intended for ADMIN role, but subject to security configuration matcher evaluation.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Product identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product successfully deleted / deactivated"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/products/search": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Search products by name substring",
+        "description": "Public search endpoint matching active product names case-insensitively.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "Search keyword or name query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching products list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
